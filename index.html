@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Swipe les propositions de la présidentielle 2027 et découvre les candidats les plus proches de tes idées.">
+<meta name="theme-color" content="#f3f4f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#11151f" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Boussole 2027">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>body{margin:0}:root{padding-top:env(safe-area-inset-top,0px)}</style>
+<title>Boussole 2027</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout : appli mobile en une colonne, carte-bulletin au centre, barre d'onglets en bas. */
+:root{
+  --paper:#f3f4f7; --card:#ffffff; --ink:#18223a; --muted:#5d6579; --line:#d9dce4;
+  --accent:#c8372d; --blue:#23408e; --yes:#1f8a4c; --no:#c8372d; --meh:#8a8f9c; --star:#b8860b;
+  --chip:#e8eaf0; --shadow:0 10px 30px rgba(24,34,58,.14);
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",Roboto,Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",Consolas,"Courier New",monospace;
+  --t-economie:#7a4e9e; --t-social:#b5582a; --t-immigration:#2f7d7a;
+  --t-securite:#4a4f63; --t-institutions:#9b3a5a; --t-international:#2c6e49; --t-energie:#a0831c;
+  --t-societe:#5f7d2a; --t-services:#2d6fa8; --t-logement:#8a5a3c;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#11151f; --card:#1b2130; --ink:#e7eaf2; --muted:#9aa2b6; --line:#2d3446;
+  --accent:#ef6a5f; --blue:#8aa6ee; --yes:#4cc27f; --no:#ef6a5f; --meh:#9aa0ae; --star:#e0b43c;
+  --chip:#262d3f; --shadow:0 10px 30px rgba(0,0,0,.45); color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#11151f; --card:#1b2130; --ink:#e7eaf2; --muted:#9aa2b6; --line:#2d3446;
+  --accent:#ef6a5f; --blue:#8aa6ee; --yes:#4cc27f; --no:#ef6a5f; --meh:#9aa0ae; --star:#e0b43c;
+  --chip:#262d3f; --shadow:0 10px 30px rgba(0,0,0,.45); color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.app{max-width:560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding-inline:16px;padding-block:12px 96px}
+header.top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding-block:6px 14px}
+.brand{font-family:var(--f-display);font-weight:800;font-size:30px;letter-spacing:.01em;line-height:1}
+.brand span{color:var(--accent)}
+.meta{font-family:var(--f-mono);font-size:12px;color:var(--muted);text-align:right}
+h2{font-family:var(--f-display);font-weight:700;font-size:28px;line-height:1.05;margin:0 0 6px;text-wrap:balance}
+.lede{color:var(--muted);margin:0 0 16px}
+a{color:var(--blue)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px;border-radius:6px}
+
+/* ---------- Deck ---------- */
+.progress{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.bar{flex:1;height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ink);transition:width .3s}
+.deck{position:relative;height:min(62vh,470px);min-height:360px;touch-action:none;user-select:none}
+.card{position:absolute;inset:0;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;will-change:transform}
+.card.under{transform:translateY(12px) scale(.96);opacity:.7;box-shadow:none}
+.card .band{height:10px;background:var(--tc)}
+.card .body{flex:1;display:flex;flex-direction:column;padding:18px 20px 16px;gap:14px;min-height:0}
+.theme{align-self:flex-start;font-family:var(--f-mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--tc);border:1.5px solid var(--tc);border-radius:999px;padding:3px 10px}
+.ctitle{font-family:var(--f-display);font-weight:700;font-size:clamp(28px,7.6vw,36px);line-height:1.05;margin:auto 0;text-wrap:balance}
+.cfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px dashed var(--line);padding-top:12px}
+.more{background:none;border:1.5px solid var(--line);border-radius:8px;padding:8px 12px;font-weight:600;cursor:pointer}
+.num{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.stamp{position:absolute;top:26px;font-family:var(--f-display);font-weight:800;font-size:30px;letter-spacing:.04em;padding:2px 12px;border:3px solid;border-radius:6px;opacity:0;pointer-events:none;transform:rotate(-10deg)}
+.stamp.yes{left:18px;color:var(--yes)} .stamp.no{right:18px;color:var(--no);transform:rotate(10deg)} .stamp.meh{left:50%;top:auto;bottom:80px;transform:translateX(-50%);color:var(--meh)}
+.actions{display:flex;justify-content:center;gap:14px;margin-top:22px}
+.act{width:62px;height:62px;border-radius:50%;border:1px solid var(--line);background:var(--card);box-shadow:var(--shadow);display:grid;place-items:center;cursor:pointer;transition:transform .12s}
+.act:active{transform:scale(.92)}
+.act svg{width:28px;height:28px}
+.act.meh{color:var(--meh);width:52px;height:52px;align-self:center} .act.no{color:var(--no)} .act.yes{color:var(--yes)} .act.star{color:var(--star);width:52px;height:52px;align-self:center}
+.legend{display:flex;justify-content:center;gap:14px;margin-top:8px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.undo{display:block;margin:14px auto 0;background:none;border:none;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:14px}
+.done{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;text-align:center}
+
+/* ---------- Sheet ---------- */
+.sheet-bg{position:fixed;inset:0;background:rgba(10,14,24,.5);display:flex;align-items:flex-end;justify-content:center;z-index:30}
+.sheet{background:var(--card);width:100%;max-width:560px;max-height:85%;overflow:auto;border-radius:16px 16px 0 0;padding:20px 20px calc(24px + env(safe-area-inset-bottom,0px))}
+.sheet h3{font-family:var(--f-display);font-size:26px;line-height:1.08;margin:8px 0 10px;text-wrap:balance}
+.sheet p{margin:0 0 12px;max-width:65ch}
+.btn{border:none;border-radius:10px;padding:12px 16px;font-weight:700;cursor:pointer;background:var(--ink);color:var(--card);width:100%}
+.btn.ghost{background:var(--chip);color:var(--ink)}
+
+/* ---------- Results ---------- */
+.rank{display:flex;flex-direction:column;gap:10px}
+.row{display:grid;grid-template-columns:34px 1fr auto;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.row.first{border-color:var(--ink);border-width:2px}
+.pos{font-family:var(--f-display);font-weight:800;font-size:26px;text-align:center}
+.who{min-width:0}
+.who b{display:block;font-size:17px}
+.who small{color:var(--muted);font-size:13px}
+.meter{height:6px;background:var(--line);border-radius:3px;margin-top:6px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--ink)}
+.pct{font-family:var(--f-display);font-weight:700;font-size:28px;font-variant-numeric:tabular-nums;text-align:right;line-height:1}
+.pct small{display:block;font-family:var(--f-mono);font-size:11px;color:var(--muted);font-weight:400;margin-top:3px}
+.row.thin{opacity:.62}
+.row{grid-template-columns:34px 1fr auto 10px}
+button.row{width:100%;text-align:left;cursor:pointer}
+.go{color:var(--muted);font-size:22px;line-height:1}
+/* Détail d'un candidat */
+.back{background:none;border:none;color:var(--blue);font-weight:600;cursor:pointer;padding:4px 0;margin-bottom:8px}
+.chead{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:start}
+.chead .lede{margin-bottom:10px}
+.split{display:flex;gap:8px;flex-wrap:wrap}
+.split button{border:1.5px solid transparent;border-radius:999px;padding:4px 12px;font-size:13.5px;cursor:pointer}
+.split button[aria-pressed="true"]{border-color:currentColor;font-weight:700}
+.split button:disabled{opacity:.55;cursor:default}
+.split .s-all{background:none;color:var(--blue);text-decoration:underline}
+.split b{font-family:var(--f-display);font-size:18px;margin-right:3px}
+.s-ok{background:color-mix(in srgb,var(--yes) 14%,transparent);color:var(--yes)}
+.s-ko{background:color-mix(in srgb,var(--no) 13%,transparent);color:var(--no)}
+.s-mid{background:var(--chip);color:var(--muted)}
+.sect{font-family:var(--f-display);font-size:22px;margin:22px 0 8px}
+.sect.ok{color:var(--yes)} .sect.ko{color:var(--no)}
+.cmplist{display:flex;flex-direction:column;gap:8px}
+details.cmp{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--tc);border-radius:10px}
+details.cmp summary{list-style:none;cursor:pointer;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+details.cmp summary::-webkit-details-marker{display:none}
+details.cmp small{font-family:var(--f-mono);font-size:11px;color:var(--tc);text-transform:uppercase;letter-spacing:.06em}
+.ct{font-weight:600}
+.duo{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.duo .cnt{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+details.cmp .srcs{padding:0 12px 12px}
+.midwrap summary{list-style:none;cursor:pointer}
+.midwrap summary::-webkit-details-marker{display:none}
+.midwrap .sect::after{content:" ›";color:var(--muted)}
+.note{font-size:13.5px;color:var(--muted);background:var(--chip);border-radius:10px;padding:10px 12px;margin-top:14px}
+.empty{background:var(--card);border:1px dashed var(--line);border-radius:12px;padding:20px;color:var(--muted)}
+
+/* ---------- My votes ---------- */
+.filters{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px}
+.fchip{flex:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:13.5px;cursor:pointer}
+.fchip[aria-pressed="true"]{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.vlist{display:flex;flex-direction:column;gap:8px}
+details.v{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--tc);border-radius:10px}
+details.v summary{list-style:none;cursor:pointer;padding:12px 14px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+details.v summary::-webkit-details-marker{display:none}
+.vt{font-weight:600;min-width:0}
+.vt small{display:block;font-family:var(--f-mono);font-size:11px;color:var(--tc);text-transform:uppercase;letter-spacing:.06em;font-weight:500}
+.pill{font-size:12.5px;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.pill.p2{background:color-mix(in srgb,var(--star) 20%,transparent);color:var(--star)}
+.pill.p1{background:color-mix(in srgb,var(--yes) 18%,transparent);color:var(--yes)}
+.pill.m1{background:color-mix(in srgb,var(--no) 16%,transparent);color:var(--no)}
+.pill.z{background:var(--chip);color:var(--muted)}
+.vin{padding:0 14px 14px;border-top:1px solid var(--line)}
+.vin p{margin:12px 0;color:var(--muted);font-size:14.5px;max-width:65ch}
+.seg{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 12px}
+.seg button{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:6px 10px;font-size:13.5px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.stances{width:100%;border-collapse:collapse;font-size:14px}
+.stances td{padding:7px 4px;border-top:1px solid var(--line);vertical-align:top}
+.stances td:first-child{white-space:nowrap;font-weight:600;padding-right:10px}
+.tag{font-weight:700;font-size:12px;border-radius:4px;padding:1px 6px;margin-right:6px}
+.tag.pour{background:color-mix(in srgb,var(--yes) 18%,transparent);color:var(--yes)}
+.tag.contre{background:color-mix(in srgb,var(--no) 16%,transparent);color:var(--no)}
+.src{font-size:12.5px;white-space:nowrap}
+.sec{font-family:var(--f-mono);font-size:10.5px;color:var(--muted)}
+.unk{font-size:13px;color:var(--muted);margin-top:8px}
+
+/* ---------- About ---------- */
+.prose{max-width:65ch}
+.prose h3{font-family:var(--f-display);font-size:22px;margin:22px 0 6px}
+.prose p,.prose li{color:var(--ink)}
+.prose ul{padding-left:20px}
+.srclist{font-size:14px}
+.srclist li{margin-bottom:6px}
+.danger{background:none;border:1.5px solid var(--no);color:var(--no);border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
+.confirm{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+/* ---------- Transfert des votes ---------- */
+.code{display:block;width:100%;font-family:var(--f-mono);font-size:12px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px;margin:10px 0 6px;resize:vertical;overflow-wrap:anywhere}
+.lab{display:block;font-weight:600;margin-top:16px}
+.btn:disabled{opacity:.5;cursor:default}
+.prose .okmsg{color:var(--yes);font-weight:600;margin-top:8px}
+.notice{position:relative;background:var(--card);border:2px solid var(--blue);border-radius:12px;padding:12px 44px 12px 14px;margin-bottom:14px}
+.nclose{position:absolute;top:6px;right:6px;width:34px;height:34px;border:none;background:none;color:var(--muted);font-size:16px;cursor:pointer}
+[hidden]{display:none!important}
+.notice p{margin:4px 0 10px;font-size:14.5px}
+.notice a{font-weight:700;overflow-wrap:anywhere}
+
+/* ---------- Tabs ---------- */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;z-index:20;padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.tabs .in{display:grid;grid-template-columns:repeat(4,1fr);width:100%;max-width:560px}
+nav.tabs button{background:none;border:none;padding:10px 4px 12px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;color:var(--muted);cursor:pointer}
+nav.tabs button svg{width:24px;height:24px}
+nav.tabs button[aria-selected="true"]{color:var(--accent);font-weight:700}
+/* ---------- Positions 5 niveaux ---------- */
+.cl{border-top:1px solid var(--line)}
+.cl summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 2px;font-size:14.5px}
+.cl summary::-webkit-details-marker{display:none}
+.cl summary b{font-weight:600}
+.cl summary .cnt{font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-left:6px;font-weight:400}
+.lv{font-weight:700;font-size:12px;border-radius:4px;padding:2px 7px;white-space:nowrap}
+.lv.l2{background:color-mix(in srgb,var(--yes) 26%,transparent);color:var(--yes)}
+.lv.l1{background:color-mix(in srgb,var(--yes) 12%,transparent);color:var(--yes)}
+.lv.l0{background:var(--chip);color:var(--muted)}
+.lv.l-1{background:color-mix(in srgb,var(--no) 12%,transparent);color:var(--no)}
+.lv.l-2{background:color-mix(in srgb,var(--no) 24%,transparent);color:var(--no)}
+.old{font-family:var(--f-mono);font-size:10.5px;color:var(--star);margin-left:6px}
+.srcs{display:flex;flex-direction:column;gap:8px;padding:2px 2px 12px}
+.sitem{font-size:13.5px;border-left:2px solid var(--line);padding-left:10px;min-width:0}
+.sitem .sh{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.sitem q{display:block;color:var(--muted);font-style:italic;margin:3px 0;quotes:"« " " »"}
+.sitem a{overflow-wrap:anywhere}
+.cnote{font-size:13.5px;color:var(--ink);margin:0 0 4px}
+/* ---------- Points positif / négatif ---------- */
+.pc{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 6px}
+@media (max-width:420px){.pc{grid-template-columns:1fr}}
+.pcitem{border-radius:10px;padding:10px 12px;min-width:0}
+.pcitem.pro{background:color-mix(in srgb,var(--yes) 10%,transparent);border:1px solid color-mix(in srgb,var(--yes) 30%,transparent)}
+.pcitem.con{background:color-mix(in srgb,var(--no) 9%,transparent);border:1px solid color-mix(in srgb,var(--no) 28%,transparent)}
+.pclab{display:block;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:500;margin-bottom:4px}
+.pro .pclab{color:var(--yes)} .con .pclab{color:var(--no)}
+.pcitem p{margin:0!important;font-size:14.5px;color:var(--ink)!important;max-width:none}
+.pcnote{font-size:12px!important;color:var(--muted)!important;margin:0 0 12px!important}
+.origin{font-family:var(--f-mono);font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">Boussole<span>2027</span></div>
+    <div class="meta">Présidentielle<br>1er tour 18 avril 2027</div>
+  </header>
+  <div id="notice"></div>
+  <main id="view"></main>
+</div>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="in" role="tablist">
+    <button role="tab" data-tab="vote" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M8 11V4h8v7M10 7l1.5 1.5L14 6"/></svg>Voter</button>
+    <button role="tab" data-tab="results" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 21V11M10 21V5M16 21v-7M22 21H2"/></svg>Résultats</button>
+    <button role="tab" data-tab="mine" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6h12M9 12h12M9 18h12M3 6l1 1 2-2M3 12l1 1 2-2M3 18l1 1 2-2"/></svg>Mes votes</button>
+    <button role="tab" data-tab="about" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>Méthode</button>
+  </div>
+</nav>
+
+<script>
+const ARTEFACT = false;
+/* Données dans data.json, générées par maj-donnees.js : positions et sources MonVote2027 (licence ouverte) + propositions maison. */
+function showError(msg){
+  const v = document.getElementById("view");
+  if(v) v.innerHTML = `<div class="empty"><b>La Boussole n'a pas pu démarrer.</b><br>${String(msg).replace(/[<>&]/g,"")}<br><br>Recharge la page. Si le problème continue, envoie ce message à Claude.</div>`;
+}
+window.addEventListener("error", e => showError(e.message || "Erreur inconnue"));
+document.getElementById("view").innerHTML = '<div class="empty">Chargement des propositions…</div>';
+fetch("data.json").then(r => { if(!r.ok) throw new Error("data.json introuvable (" + r.status + ")"); return r.json(); })
+  .then(start).catch(e => showError(e.message));
+
+function start(DATA){
+const CANDIDATS = DATA.candidats, P = DATA.props;
+const THEMES = {
+  immigration:"Immigration", securite:"Sécurité et justice", economie:"Économie et impôts", social:"Travail et social",
+  international:"International et défense", institutions:"Institutions", services:"Santé et éducation",
+  energie:"Énergie et environnement", societe:"Société", logement:"Logement"
+};
+const LV = {"2":"Tout à fait pour","1":"Plutôt pour","0":"Neutre","-1":"Plutôt contre","-2":"Tout à fait contre"};
+
+/* ===================== ÉTAT ===================== */
+const KEY = "boussole2027.v1";
+const LABEL = {2:"Coup de cœur",1:"D'accord",0:"Sans avis","-1":"Pas d'accord"};
+const PCLS = {2:"p2",1:"p1",0:"z","-1":"m1"};
+let state = {votes:{}, order:null, hist:[]};
+try{ const raw = localStorage.getItem(KEY); if(raw) state = Object.assign(state, JSON.parse(raw)); }catch(e){}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+const byId = Object.fromEntries(P.map(p => [p.id,p]));
+// Le vote d'une proposition retirée des données est gardé de côté (ignoré dans les calculs), jamais effacé.
+state.hist = state.hist.filter(id => byId[id]);
+const expressed = () => Object.entries(state.votes).filter(([id,v]) => v !== 0 && byId[id]).length;
+const nKnown = () => Object.keys(state.votes).filter(id => byId[id]).length;
+
+/* Code de transfert : tous les votes (y compris ceux gardés de côté) sous forme « B27.<base64 de id=vote,...> ». */
+const PREFIX = "B27.", SITE = "https://aurelienmoreau47.github.io/boussole-2027/";
+const exportCode = () => PREFIX + btoa(Object.entries(state.votes).map(([id,v]) => id + "=" + v).join(","));
+function parseCode(txt){
+  const s = String(txt || "").replace(/\s+/g, "");
+  if(!s.startsWith(PREFIX)) return null;
+  let raw; try{ raw = atob(s.slice(PREFIX.length)); }catch(e){ return null; }
+  const out = {};
+  for(const part of raw.split(",")){ const m = part.match(/^([a-z0-9]+)=(-1|0|1|2)$/); if(!m) return null; out[m[1]] = +m[2]; }
+  return Object.keys(out).length ? out : null;
+}
+function copyCode(zone){
+  if(!Object.keys(state.votes).length){ zone.innerHTML = '<p class="unk" role="status">Tu n\'as encore rien voté : pas de code à copier.</p>'; return; }
+  const code = exportCode();
+  zone.innerHTML = `<textarea class="code" rows="3" readonly aria-label="Mon code">${code}</textarea><p class="unk" role="status"></p>`;
+  const ta = zone.querySelector("textarea"), msg = zone.querySelector("p");
+  const manual = () => { ta.focus(); ta.select(); msg.textContent = "Le code est sélectionné : copie-le (appui long puis Copier) et garde-le dans une note."; };
+  try{ navigator.clipboard.writeText(code).then(() => msg.textContent = "Code copié. Garde-le dans une note, ou colle-le directement sur l'autre appareil.", manual); }
+  catch(e){ manual(); }
+}
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function buildOrder(ids){
+  const byTheme = {};
+  ids.forEach(id => (byTheme[byId[id].th] = byTheme[byId[id].th] || []).push(id));
+  const lists = shuffle(Object.values(byTheme).map(shuffle)), out = [];
+  while(lists.some(l => l.length)) lists.forEach(l => { if(l.length) out.push(l.shift()); });
+  return out;
+}
+{ const known = (state.order||[]).filter(id => byId[id]);
+  const fresh = buildOrder(P.map(p=>p.id).filter(id => !known.includes(id)));
+  state.order = known.concat(fresh); save(); }
+const pending = () => state.order.filter(id => !(id in state.votes));
+
+/* ===================== CALCUL =====================
+   Vote : d'accord = +1, pas d'accord = -1, coup de cœur = +1 avec un poids double.
+   Position du candidat de -2 à +2. Accord sur une proposition = (1 + vote × position / 2) / 2,
+   soit 100 % si tout à fait aligné, 75 % si « plutôt », 50 % si neutre, 25 % ou 0 % en désaccord. */
+function scores(){
+  return Object.keys(CANDIDATS).map(c => {
+    let got = 0, total = 0, n = 0;
+    for(const [id,v] of Object.entries(state.votes)){
+      if(v === 0 || !byId[id]) continue;
+      const st = byId[id].s[c]; if(!st) continue;
+      const w = v === 2 ? 2 : 1, u = v > 0 ? 1 : -1;
+      got += w * (1 + u*st.pos/2) / 2; total += w; n++;
+    }
+    return {c, n, pct: total ? Math.round(100*got/total) : null};
+  }).sort((a,b) => (b.pct ?? -1) - (a.pct ?? -1) || b.n - a.n);
+}
+const lastName = c => CANDIDATS[c].n.split(" ").slice(1).join(" ") || CANDIDATS[c].n;
+const newest = srcs => Math.max(0, ...srcs.map(s => parseInt(s.date) || 0));
+
+/* ===================== RENDU ===================== */
+const view = document.getElementById("view");
+let tab = "vote", filter = "all", focusC = null, candFilter = "";
+const esc = s => String(s ?? "").replace(/[&<>"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const tc = th => `--tc:var(--t-${th})`;
+const ICON = {
+  meh:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 12h12"/></svg>',
+  no:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  yes:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.4-9.3C1.2 8.2 3.4 4.5 7 4.5c2 0 3.6 1.1 5 2.8 1.4-1.7 3-2.8 5-2.8 3.6 0 5.8 3.7 4.4 7.2C19.5 16.4 12 21 12 21z"/></svg>',
+  star:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg>'
+};
+
+function render(){
+  document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === tab));
+  ({vote:renderVote, results:renderResults, mine:renderMine, about:renderAbout})[tab]();
+}
+
+function renderVote(){
+  const left = pending(), done = P.length - left.length;
+  const bar = `<div class="progress"><span>${done} / ${P.length}</span><div class="bar"><i style="width:${100*done/P.length}%"></i></div></div>`;
+  if(!left.length){
+    view.innerHTML = bar + `<div class="done"><h2>Tu as tout voté</h2><p class="lede">Ton classement est prêt. De nouvelles propositions arriveront au fil des programmes.</p><button class="btn" id="goRes">Voir mes résultats</button></div>`;
+    document.getElementById("goRes").onclick = () => { tab="results"; render(); };
+    return;
+  }
+  const cur = byId[left[0]], next = left[1] && byId[left[1]];
+  const cardHTML = (p, cls) => `<article class="card ${cls}" style="${tc(p.th)}" ${cls?'aria-hidden="true"':''}>
+      <div class="band"></div>
+      <div class="body">
+        <span class="theme">${THEMES[p.th]}</span>
+        <p class="ctitle">${esc(p.t)}</p>
+        <div class="cfoot"><button class="more" data-more="${p.id}">+ En savoir plus</button><span class="num">glisse ou utilise les boutons</span></div>
+      </div>
+      ${cls?'':'<span class="stamp yes">D\'ACCORD</span><span class="stamp no">CONTRE</span><span class="stamp meh">SANS AVIS</span>'}
+    </article>`;
+  view.innerHTML = bar + `<div class="deck">${next?cardHTML(next,"under"):""}${cardHTML(cur,"")}</div>
+    <div class="actions">
+      <button class="act meh" data-v="0" aria-label="Sans avis">${ICON.meh}</button>
+      <button class="act no" data-v="-1" aria-label="Pas d'accord">${ICON.no}</button>
+      <button class="act yes" data-v="1" aria-label="D'accord">${ICON.yes}</button>
+      <button class="act star" data-v="2" aria-label="Coup de cœur">${ICON.star}</button>
+    </div>
+    <div class="legend"><span>Sans avis ↓</span><span>← Contre</span><span>D'accord →</span><span>Coup de cœur</span></div>
+    ${state.hist.length?'<button class="undo" id="undo">Annuler mon dernier vote</button>':''}`;
+  view.querySelectorAll(".act").forEach(b => b.onclick = () => fling(cur.id, +b.dataset.v));
+  view.querySelector(".card:not(.under) [data-more]").onclick = () => sheet(cur);
+  const u = document.getElementById("undo"); if(u) u.onclick = undo;
+  drag(view.querySelector(".card:not(.under)"), cur.id);
+}
+
+function vote(id, v){ state.votes[id] = v; state.hist.push(id); if(state.hist.length>50) state.hist.shift(); save(); }
+function undo(){ const id = state.hist.pop(); if(id){ delete state.votes[id]; state.order = [id].concat(state.order.filter(x=>x!==id)); save(); render(); } }
+
+function fling(id, v){
+  const card = view.querySelector(".card:not(.under)");
+  if(card && !matchMedia("(prefers-reduced-motion: reduce)").matches){
+    const dx = v>0 ? 1 : v<0 ? -1 : 0;
+    card.style.transition = "transform .28s ease-in, opacity .28s";
+    card.style.transform = dx ? `translate(${dx*140}%, -6%) rotate(${dx*18}deg)` : "translateY(120%)";
+    card.style.opacity = "0";
+    setTimeout(() => { vote(id,v); render(); }, 260);
+  } else { vote(id,v); render(); }
+}
+
+function drag(card, id){
+  if(!card) return;
+  let sx=0, sy=0, dx=0, dy=0, on=false;
+  const st = {yes:card.querySelector(".stamp.yes"), no:card.querySelector(".stamp.no"), meh:card.querySelector(".stamp.meh")};
+  card.addEventListener("pointerdown", e => {
+    if(e.target.closest("button")) return;
+    on = true; sx = e.clientX; sy = e.clientY; card.setPointerCapture(e.pointerId); card.style.transition = "none";
+  });
+  card.addEventListener("pointermove", e => {
+    if(!on) return;
+    dx = e.clientX - sx; dy = e.clientY - sy;
+    card.style.transform = `translate(${dx}px, ${dy}px) rotate(${dx/18}deg)`;
+    st.yes.style.opacity = Math.max(0, Math.min(1, dx/100));
+    st.no.style.opacity = Math.max(0, Math.min(1, -dx/100));
+    st.meh.style.opacity = Math.abs(dx) < 60 ? Math.max(0, Math.min(1, dy/110)) : 0;
+  });
+  const end = () => {
+    if(!on) return; on = false;
+    if(dx > 100) fling(id, 1);
+    else if(dx < -100) fling(id, -1);
+    else if(dy > 110 && Math.abs(dx) < 80) fling(id, 0);
+    else { card.style.transition = "transform .2s"; card.style.transform = ""; Object.values(st).forEach(s => s.style.opacity = 0); }
+    dx = dy = 0;
+  };
+  card.addEventListener("pointerup", end); card.addEventListener("pointercancel", end);
+}
+
+function sheet(p){
+  const bg = document.createElement("div");
+  bg.className = "sheet-bg";
+  bg.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" style="${tc(p.th)}">
+    <span class="theme">${THEMES[p.th]}</span>
+    <h3>${esc(p.t)}</h3>
+    <p>${esc(p.d || "Pas de contexte supplémentaire pour cette proposition.")}</p>
+    ${pcHTML(p)}
+    <p class="unk">Les candidats restent cachés jusqu'à ton vote. Tu retrouves ensuite leurs positions et leurs sources dans « Mes votes ».</p>
+    <button class="btn" id="closeSheet">Fermer</button></div>`;
+  document.body.appendChild(bg);
+  const close = () => bg.remove();
+  bg.onclick = e => { if(e.target === bg) close(); };
+  bg.querySelector("#closeSheet").onclick = close;
+  bg.querySelector("#closeSheet").focus();
+}
+
+function renderResults(){
+  const nv = expressed();
+  if(nv < 10){
+    view.innerHTML = `<h2>Mes résultats</h2><div class="empty">Vote sur au moins 10 propositions (hors « sans avis ») pour voir un premier classement. Tu en es à ${nv}.</div>`;
+    return;
+  }
+  if(focusC) return renderCand(focusC, nv);
+  const sc = scores();
+  let rank = 0;
+  view.innerHTML = `<h2>Mes résultats</h2>
+    <p class="lede">Ton degré d'accord avec chaque candidat, calculé sur ${nv} votes exprimés. Touche un candidat pour voir ce qui vous rapproche et ce qui vous oppose.</p>
+    <div class="rank">${sc.map(r => {
+      const c = CANDIDATS[r.c], thin = r.n < 8; if(r.pct !== null) rank++;
+      const tag = r.pct===null ? 'div' : 'button';
+      return `<${tag} class="row ${rank===1&&r.pct!==null&&!thin?'first':''} ${thin?'thin':''}" ${r.pct===null?'':`data-c="${r.c}"`}>
+        <div class="pos">${r.pct===null?'–':rank}</div>
+        <div class="who"><b>${esc(c.n)}</b><small>${esc(c.p)}</small>
+          ${r.pct!==null?`<div class="meter"><i style="width:${r.pct}%"></i></div>`:''}</div>
+        <div class="pct">${r.pct===null?'–':r.pct+' %'}<small>${r.n} comparée${r.n>1?'s':''}</small></div>
+        <span class="go" aria-hidden="true">${r.pct===null?'':'›'}</span>
+      </${tag}>`;}).join("")}</div>
+    <p class="note">50 % signifie ni accord ni désaccord. Un candidat grisé est comparé sur moins de 8 propositions : son score est peu fiable. Ce classement mesure une proximité avec des positions connues à date. Ce n'est pas une consigne de vote.</p>`;
+  view.querySelectorAll("button.row").forEach(b => b.onclick = () => { focusC = b.dataset.c; candFilter = ""; render(); window.scrollTo(0,0); });
+}
+
+/* Détail d'un candidat : propositions où l'on est d'accord (75 à 100 %), opposés (0 à 25 %) ou neutres (50 %). */
+function renderCand(c, nv){
+  const r = scores().find(x => x.c === c), name = lastName(c), items = [];
+  for(const [id,v] of Object.entries(state.votes)){
+    if(v === 0 || !byId[id]) continue;
+    const st = byId[id].s[c]; if(!st) continue;
+    items.push({p: byId[id], v, st, m: (1 + (v > 0 ? 1 : -1) * st.pos/2) / 2});
+  }
+  const heart = (a,b) => (b.v === 2) - (a.v === 2);
+  const ok = items.filter(x => x.m > .5).sort((a,b) => heart(a,b) || b.m - a.m);
+  const ko = items.filter(x => x.m < .5).sort((a,b) => heart(a,b) || a.m - b.m);
+  const mid = items.filter(x => x.m === .5).sort(heart);
+  const item = x => {
+    const yr = newest(x.st.srcs), old = yr && yr < 2024;
+    return `<details class="cmp" style="${tc(x.p.th)}"><summary>
+      <small>${THEMES[x.p.th]}</small><span class="ct">${esc(x.p.t)}</span>
+      <span class="duo"><span class="pill ${PCLS[x.v]}">Toi : ${LABEL[x.v]}</span><span class="lv l${x.st.pos}">${esc(name)} : ${LV[x.st.pos]}</span>
+        <span class="cnt">${x.st.srcs.length} source${x.st.srcs.length>1?'s':''}</span>${old?'<span class="old">sources avant 2024</span>':''}</span>
+    </summary><div class="srcs">${x.st.note?`<p class="cnote">${esc(x.st.note)}</p>`:''}${x.st.srcs.map(srcHTML).join("")}</div></details>`;
+  };
+  const list = arr => arr.length ? `<div class="cmplist">${arr.map(item).join("")}</div>` : '<p class="unk">Aucune pour l\'instant.</p>';
+  const unknown = nv - (r ? r.n : 0), cf = candFilter;
+  // Les compteurs servent de filtre : on affiche seulement la liste choisie, un second appui revient à tout voir.
+  const chip = (k, n, lab) => `<button class="s-${k}" data-cf="${k}" aria-pressed="${cf===k}" ${n?'':'disabled'}><b>${n}</b> ${lab}</button>`;
+  view.innerHTML = `<button class="back" id="back">‹ Classement</button>
+    <div class="chead"><div><h2>${esc(CANDIDATS[c].n)}</h2><p class="lede">${esc(CANDIDATS[c].p)}</p></div>
+      <div class="pct">${r && r.pct !== null ? r.pct+' %' : '–'}<small>${r ? r.n : 0} comparée${r && r.n>1?'s':''}</small></div></div>
+    <div class="split">${chip("ok", ok.length, "en commun")}${chip("ko", ko.length, "en désaccord")}${chip("mid", mid.length, "neutre" + (mid.length>1?"s":""))}
+      ${cf?'<button class="s-all" data-cf="">Tout voir</button>':''}</div>
+    ${!cf||cf==="ok"?`<h3 class="sect ok">Ce que vous avez en commun</h3>${list(ok)}`:''}
+    ${!cf||cf==="ko"?`<h3 class="sect ko">Ce qui vous oppose</h3>${list(ko)}`:''}
+    ${cf==="mid"?`<h3 class="sect">Où ${esc(name)} est neutre</h3>${list(mid)}`
+      : !cf&&mid.length?`<details class="midwrap"><summary><h3 class="sect">Où ${esc(name)} est neutre (${mid.length})</h3></summary>${list(mid)}</details>`:''}
+    <p class="note">Coups de cœur en premier, puis les accords et désaccords les plus nets. Touche une proposition pour voir les sources de la position. ${unknown>0?`${unknown} de tes votes ne comptent pas ici : pas de position sourcée de ${esc(name)} sur ces propositions.`:''}</p>`;
+  view.querySelectorAll("[data-cf]").forEach(b => b.onclick = () => {
+    candFilter = candFilter === b.dataset.cf ? "" : b.dataset.cf; renderCand(c, nv);
+    const f = view.querySelector(`[data-cf="${candFilter}"]`) || view.querySelector("[data-cf]"); if(f) f.focus({preventScroll:true});
+  });
+  document.getElementById("back").onclick = () => {
+    focusC = null; render();
+    const row = view.querySelector(`[data-c="${c}"]`); if(row){ row.scrollIntoView({block:"center"}); row.focus({preventScroll:true}); }
+  };
+}
+
+function pcHTML(p){
+  if(!p.pc) return "";
+  return `<div class="pc">
+    <div class="pcitem pro"><span class="pclab">Point positif</span><p>${esc(p.pc.pour)}</p></div>
+    <div class="pcitem con"><span class="pclab">Point négatif</span><p>${esc(p.pc.contre)}</p></div>
+  </div><p class="pcnote">Arguments résumés de façon neutre par la Boussole, pour éclairer le débat.</p>`;
+}
+
+function srcHTML(s){
+  return `<div class="sitem"><div class="sh">${esc(s.type)}${s.date?' · '+esc(s.date):''}</div>
+    <a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.titre || s.url)}</a>${s.cit?`<q>${esc(s.cit.replace(/^«\s*|\s*»$/g,""))}</q>`:''}</div>`;
+}
+
+function renderMine(){
+  const ids = state.order.filter(id => id in state.votes);
+  if(!ids.length){ view.innerHTML = `<h2>Mes votes</h2><div class="empty">Tes votes apparaîtront ici, avec la position de chaque candidat et ses sources.</div>`; return; }
+  const themes = Object.keys(THEMES).filter(t => ids.some(id => byId[id].th === t));
+  const shown = ids.filter(id => filter==="all" || byId[id].th===filter);
+  view.innerHTML = `<h2>Mes votes</h2><p class="lede">Touche une proposition pour voir la position de chaque candidat, ses sources, et changer ton vote.</p>
+    <div class="filters"><button class="fchip" data-f="all" aria-pressed="${filter==='all'}">Tout (${ids.length})</button>${themes.map(t=>`<button class="fchip" data-f="${t}" aria-pressed="${filter===t}">${THEMES[t]}</button>`).join("")}</div>
+    <div class="vlist">${shown.map(id => {
+      const p = byId[id], v = state.votes[id];
+      return `<details class="v" data-pid="${id}" style="${tc(p.th)}"><summary><span class="vt"><small>${THEMES[p.th]}</small>${esc(p.t)}</span><span class="pill ${PCLS[v]}">${LABEL[v]}</span></summary><div class="vin"></div></details>`;
+    }).join("")}</div>`;
+  view.querySelectorAll(".fchip").forEach(b => b.onclick = () => { filter = b.dataset.f; renderMine(); });
+  view.querySelectorAll("details.v").forEach(d => d.addEventListener("toggle", () => { if(d.open && !d.dataset.done){ fillVote(d); d.dataset.done = 1; } }));
+}
+
+function fillVote(d){
+  const id = d.dataset.pid, p = byId[id], v = state.votes[id];
+  const rows = Object.entries(p.s).sort((a,b) => b[1].pos - a[1].pos).map(([c,st]) => {
+    const yr = newest(st.srcs), old = yr && yr < 2024;
+    return `<details class="cl"><summary><span><b>${esc(CANDIDATS[c].n)}</b><span class="cnt">${st.srcs.length} source${st.srcs.length>1?'s':''}</span>${old?'<span class="old">sources avant 2024</span>':''}</span><span class="lv l${st.pos}">${LV[st.pos]}</span></summary>
+      <div class="srcs">${st.note?`<p class="cnote">${esc(st.note)}</p>`:''}${st.srcs.map(srcHTML).join("")}</div></details>`;
+  }).join("");
+  const missing = Object.keys(CANDIDATS).filter(c => !p.s[c]).map(lastName);
+  d.querySelector(".vin").innerHTML = `<p>${esc(p.d || "")}</p>
+    ${pcHTML(p)}
+    <div class="seg" role="group" aria-label="Changer mon vote">${[-1,0,1,2].map(x=>`<button data-set="${x}" aria-pressed="${v===x}">${LABEL[x]}</button>`).join("")}</div>
+    <div class="origin">${p.o==="mv"?"Positions : MonVote2027":"Proposition ajoutée par la Boussole"}</div>
+    ${rows || '<p class="unk">Aucune position sourcée pour cette proposition.</p>'}
+    ${missing.length?`<p class="unk">Pas de position sourcée : ${missing.map(esc).join(", ")}.</p>`:''}`;
+  d.querySelectorAll("[data-set]").forEach(b => b.onclick = () => {
+    state.votes[id] = +b.dataset.set; save();
+    d.querySelectorAll("[data-set]").forEach(x => x.setAttribute("aria-pressed", x === b));
+    const pill = d.querySelector(".pill"); pill.className = "pill " + PCLS[state.votes[id]]; pill.textContent = LABEL[state.votes[id]];
+  });
+}
+
+function renderAbout(){
+  const nMv = P.filter(p => p.o==="mv").length, nAj = P.length - nMv;
+  const nPos = P.reduce((n,p) => n + Object.keys(p.s).length, 0);
+  const nSrc = P.reduce((n,p) => n + Object.values(p.s).reduce((m,s) => m + s.srcs.length, 0), 0);
+  const counts = Object.keys(CANDIDATS).map(c => [c, P.filter(p => p.s[c]).length]).sort((a,b)=>b[1]-a[1]);
+  view.innerHTML = `<div class="prose"><h2>Comment ça marche</h2>
+    <p class="lede">Données mises à jour le ${esc(DATA.date)}. ${P.length} propositions, ${Object.keys(CANDIDATS).length} candidats, ${nPos} positions sourcées, ${nSrc} sources.</p>
+    <h3>D'où viennent les données</h3>
+    <p>${nMv} propositions et leurs positions viennent de <a href="https://monvote2027.fr/donnees" target="_blank" rel="noopener">MonVote2027</a>, site bénévole et sans publicité qui publie ses données sous licence ouverte. Chaque position y est rattachée à des sources : programmes, articles, interviews, votes au Parlement.</p>
+    <p>${nAj} propositions ont été ajoutées ici à partir d'articles de presse et de votes au Parlement (retraites au-delà de 64 ans, Ukraine, nucléaire, jours de carence, réseaux sociaux pour les mineurs, nombre de parlementaires…), là où MonVote2027 n'a pas de question équivalente. Certains sujets ont été repérés grâce au Quizz du Berger, mais ses positions, non sourcées, ne sont pas reprises.</p>
+    <p>Une position sans aucune source n'est pas prise en compte.</p>
+    <h3>Le vote</h3>
+    <p>Glisse à droite si tu es d'accord, à gauche si tu ne l'es pas, vers le bas si tu n'as pas d'avis. L'étoile marque un coup de cœur. Les candidats restent cachés jusqu'à ton vote.</p>
+    <h3>Le calcul</h3>
+    <p>Chaque candidat a une position sur 5 niveaux, de « tout à fait contre » à « tout à fait pour ». Sur chaque proposition, ton accord avec lui vaut 100 % s'il est tout à fait de ton avis, 75 % s'il l'est plutôt, 50 % s'il est neutre, 25 % s'il est plutôt de l'avis inverse et 0 % s'il y est tout à fait. Un coup de cœur compte double. Ton score avec un candidat est la moyenne sur les propositions où sa position est connue. « Sans avis » ne compte pas.</p>
+    <h3>Les limites</h3>
+    <ul>
+      <li>Les programmes 2027 ne sont pas finis. Certaines positions reposent sur des sources anciennes, souvent les programmes de 2022 : elles sont signalées « sources avant 2024 ».</li>
+      <li>La liste officielle des candidats ne sera connue qu'au printemps 2027. La primaire PS-Place publique a lieu en octobre 2026.</li>
+      <li>Nombre de positions sourcées par candidat : ${counts.map(([c,n]) => `${esc(lastName(c))} ${n}`).join(", ")}.</li>
+    </ul>
+    <h3 id="transfert">Sauvegarder ou transférer mes votes</h3>
+    <p>Tes votes restent sur cet appareil, dans ce navigateur. Personne d'autre ne les voit. Pour les retrouver sur un autre appareil, ou les garder de côté, copie ton code puis colle-le là où tu veux les retrouver.</p>
+    <button class="btn" id="exp" ${nKnown()?'':'disabled'}>Copier mon code (${nKnown()} vote${nKnown()>1?'s':''})</button>
+    <div id="expZone"></div>
+    <label class="lab" for="impCode">Coller un code</label>
+    <textarea id="impCode" class="code" rows="3" placeholder="B27.…"></textarea>
+    <button class="btn ghost" id="imp">Importer ces votes</button>
+    <div id="impZone"></div>
+    <h3>Recommencer</h3>
+    <button class="danger" id="reset">Effacer tous mes votes</button>
+    <div id="confirmZone"></div></div>`;
+  document.getElementById("exp").onclick = () => copyCode(document.getElementById("expZone"));
+  document.getElementById("imp").onclick = () => {
+    const got = parseCode(document.getElementById("impCode").value), zone = document.getElementById("impZone");
+    if(!got){ zone.innerHTML = '<p class="unk" role="status">Code non reconnu. Vérifie qu\'il est complet : il commence par « B27. ».</p>'; return; }
+    const n = Object.keys(got).filter(id => byId[id]).length, clash = Object.keys(got).filter(id => id in state.votes && state.votes[id] !== got[id]).length;
+    const apply = () => {
+      Object.assign(state.votes, got); state.hist = []; save(); renderAbout();
+      document.getElementById("impZone").innerHTML = `<p class="okmsg" role="status">${n} vote${n>1?'s':''} importé${n>1?'s':''}. Tes résultats sont à jour.</p>`;
+      document.getElementById("imp").scrollIntoView({block:"center"});
+    };
+    if(!clash) return apply();
+    zone.innerHTML = `<div class="confirm"><span>${clash} vote${clash>1?'s':''} de cet appareil ser${clash>1?'ont':'a'} remplacé${clash>1?'s':''} par ${clash>1?'ceux':'celui'} du code.</span><button class="danger" id="yesImp">Importer quand même</button><button class="btn ghost" style="width:auto" id="noImp">Annuler</button></div>`;
+    document.getElementById("yesImp").onclick = apply;
+    document.getElementById("noImp").onclick = () => zone.innerHTML = "";
+  };
+  document.getElementById("reset").onclick = () => {
+    document.getElementById("confirmZone").innerHTML = `<div class="confirm"><span>Effacer les ${nKnown()} votes ?</span><button class="danger" id="yesReset">Oui, effacer</button><button class="btn ghost" style="width:auto" id="noReset">Annuler</button></div>`;
+    document.getElementById("yesReset").onclick = () => { state = {votes:{}, order:buildOrder(P.map(p=>p.id)), hist:[]}; save(); tab="vote"; render(); };
+    document.getElementById("noReset").onclick = () => document.getElementById("confirmZone").innerHTML = "";
+  };
+}
+
+document.querySelectorAll("nav.tabs button").forEach(b => b.onclick = () => { tab = b.dataset.tab; focusC = null; render(); window.scrollTo(0,0); });
+document.addEventListener("keydown", e => {
+  if(tab !== "vote" || document.querySelector(".sheet-bg")) return;
+  const id = pending()[0]; if(!id) return;
+  const map = {ArrowRight:1, ArrowLeft:-1, ArrowDown:0, ArrowUp:2};
+  if(e.key in map){ e.preventDefault(); fling(id, map[e.key]); }
+});
+// Version artefact seulement : renvoi vers l'adresse définitive, avec le code pour emporter ses votes.
+if(ARTEFACT){
+  const nb = document.getElementById("notice");
+  nb.innerHTML = `<div class="notice"><button class="nclose" id="noticeHide" aria-label="Masquer">✕</button><b>La Boussole a sa propre adresse</b>
+    <p><a href="${SITE}" target="_blank" rel="noopener">aurelienmoreau47.github.io/boussole-2027</a>, à installer sur ton téléphone. Pour y retrouver tes votes : copie ton code ici, puis colle-le dans l'onglet Méthode de la nouvelle adresse.</p>
+    <button class="btn" id="noticeCopy">Copier mon code</button><div id="noticeZone"></div></div>`;
+  document.getElementById("noticeCopy").onclick = () => copyCode(document.getElementById("noticeZone"));
+  document.getElementById("noticeHide").onclick = () => nb.hidden = true;
+}
+render();
+}
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});</script>
+</body>
+</html>
